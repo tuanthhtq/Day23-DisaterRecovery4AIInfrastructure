@@ -50,6 +50,36 @@ def test_health_checker_can_threshold_lien_tiep(monkeypatch):
     assert changes[0]["consecutive_fails"] >= 3
 
 
+def test_health_checker_cadence_recovery_and_invalid_args(monkeypatch, tmp_path):
+    hc = pytest.importorskip("dr.health_checker")
+    now = [0.0]
+    starts = []
+    seq = iter([(False, "down"), (True, "ok"), (True, "ok"), (True, "ok"),
+                (True, "ok"), (True, "ok")])
+
+    def probe(region, timeout):
+        starts.append((region, now[0]))
+        result = next(seq)
+        now[0] += 0.3
+        return result
+
+    monkeypatch.setattr(hc.time, "monotonic", lambda: now[0])
+    monkeypatch.setattr(hc.time, "sleep", lambda delay: now.__setitem__(0, now[0] + delay))
+    monkeypatch.setattr(hc, "probe", probe)
+    out = tmp_path / "events.jsonl"
+    hc.run(interval=1, timeout=1, threshold=1, duration=2.1, out=out)
+    assert [t for r, t in starts if r == "a"] == [0.0, 1.0, 2.0]
+    changes = [json.loads(line) for line in out.read_text().splitlines()]
+    assert [e["to"] for e in changes] == ["UNHEALTHY", "HEALTHY"]
+
+    for kwargs in ({"interval": 0}, {"timeout": 0}, {"threshold": 0}, {"duration": -1}):
+        invalid_out = tmp_path / f"invalid-{len(kwargs)}.jsonl"
+        with pytest.raises(ValueError):
+            hc.run(**({"interval": 1, "timeout": 1, "threshold": 1,
+                       "duration": 1, "out": invalid_out} | kwargs))
+        assert not invalid_out.exists()
+
+
 def test_failover_khong_cutover_khi_target_chua_ready(monkeypatch):
     """Đổi DNS trước khi region phụ ready = 503 từ cả hai phía.
 

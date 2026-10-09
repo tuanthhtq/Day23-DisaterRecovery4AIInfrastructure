@@ -3,6 +3,12 @@
 Theo đúng template §4 "Sau Failover: Blameless Postmortem". Blameless: câu hỏi là
 "hệ thống/process nào cho phép chuyện này", không phải "ai làm sai".
 
+## 0. Baseline trước DR
+
+1. Nếu Region A chết, chưa có thành phần nào tự phát hiện vì health checker chưa được triển khai.
+2. Region B chưa có dữ liệu hoặc model weights: `count=0`, `weights=false`, `pool_state=warm`.
+3. Nếu chuyển `edge/active_region` sang `b` ngay, user nhận HTTP 503 `region_not_ready` vì Region B chưa sẵn sàng.
+
 ## 1. Timeline (mọi dòng phải có evidence path:line)
 
 | ISO time | Sự kiện | Evidence |

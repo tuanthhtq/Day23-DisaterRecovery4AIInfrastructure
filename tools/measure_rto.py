@@ -108,9 +108,11 @@ def measure(loadgen_path, chaos_path, health_path, failover_path, target_rto):
            if e.get("step") == "5_dns_cutover" and t0 <= e["ts"] <= hi]
     t_cutover = fev[0]["ts"] if fev else None
     rest = [e for e in jsonl(failover_path)
-            if e.get("step") == "2_restore_snapshot" and t0 <= e["ts"] <= hi]
-    rpo = rest[0].get("rpo_seconds") if rest else None
-    docs_lost = rest[0].get("docs_lost") if rest else None
+            if e.get("step") == "2_restore_snapshot" and t0 <= e["ts"] <= hi
+            and (t_cutover is None or e["ts"] <= t_cutover)]
+    restore = max(rest, key=lambda e: e["ts"]) if rest else None
+    rpo = restore.get("rpo_seconds") if restore else None
+    docs_lost = restore.get("docs_lost") if restore else None
 
     warn = []
     if t_detect and t_cutover and t_cutover < t_detect:

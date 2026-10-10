@@ -39,7 +39,11 @@ trong runbook của tôi sẽ thất bại?*
 
 ## 5. Ba câu hỏi bắt buộc trả lời
 
-1. `interval × threshold` của bạn là bao nhiêu giây? Nó chiếm bao nhiêu % RTO?
+1. `interval=5s`, `threshold=3`, nên detection floor là `15s`. Tỷ lệ trên RTO sẽ tính sau Drill 2 từ số đo thật.
 2. Nếu hạ interval xuống 1s, RTO giảm mấy giây — và bạn trả giá gì (§4 flapping)?
 3. Nếu outage kéo dài 6 giờ và region chính mất dữ liệu vĩnh viễn, `docs_lost` của
    bạn có nghĩa gì với khách hàng?
+
+Với RTO mục tiêu `300s` và threshold giữ ở 3, interval tối đa theo riêng công thức
+phát hiện là `100s`. Thực tế phải thấp hơn vì snapshot restore, GPU warm-up và DNS TTL
+cũng nằm trong RTO.

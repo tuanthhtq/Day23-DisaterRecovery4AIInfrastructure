@@ -59,7 +59,7 @@ def run(primary: str, target: str, backend: str, auto: bool) -> dict:
         outage = _chaos(primary, started); outage_ts, operator_ts = float(outage["ts"]), time.time()
         if operator_ts <= outage_ts: raise RuntimeError("operator timestamp must be later than outage timestamp")
         step(2, "thong_bao_incident", run_id=run_id, outage_ts=outage_ts, operator_ts=operator_ts, delay_s=operator_ts-outage_ts, primary=primary, chaos_event=outage)
-        if not confirm(auto, "Confirm failover"): return {"ok": False, "error": "operator rejected failover", "steps": 2, "run_id": run_id}
+        if not confirm(auto, "Authorize failover? Enter y to proceed; N aborts"): return {"ok": False, "error": "operator rejected failover", "steps": 2, "run_id": run_id}
         result = fo.failover(target, backend, 60); step(3, "scale_gpu_pool", run_id=run_id, outcome=result)
         if not result.get("ok"): return {"ok": False, "error": result.get("error", "failover failed"), "steps": 3, "run_id": run_id}
         replica, restored = result.get("replica") or {}, result.get("restored_state") or {}
@@ -80,7 +80,7 @@ def run(primary: str, target: str, backend: str, auto: bool) -> dict:
             latencies.append((time.perf_counter()-started_request)*1000)
         p95 = sorted(latencies)[math.ceil(len(latencies)*.95)-1]; metrics = {"requests": 10, "p95_ms": round(p95, 3), "error_rate": 1-successes/10, "served_by_target": served, "ok": successes == 10 and served == 10}
         rollback = _rollback(primary) if not metrics["ok"] else None; step(6, "verify_golden_signals", run_id=run_id, **metrics, rollback=rollback)
-        elapsed = round(time.time()-outage_ts, 3); measure = "python tools/measure_rto.py --loadgen reports/drill-2-withdr.jsonl"; step(7, "post_incident", run_id=run_id, elapsed_s=elapsed, measure_command=measure)
+        elapsed = round(time.time()-outage_ts, 3); measure = "py -3 tools/measure_rto.py --loadgen reports/drill-2-withdr.jsonl"; step(7, "post_incident", run_id=run_id, elapsed_s=elapsed, measure_command=measure)
         return {"ok": metrics["ok"], "steps": 7, "metrics": metrics, "elapsed_s": elapsed, "run_id": run_id}
     except Exception as exc: return {"ok": False, "error": f"{type(exc).__name__}: {exc}", "run_id": run_id}
 

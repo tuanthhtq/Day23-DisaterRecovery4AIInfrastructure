@@ -86,9 +86,6 @@ def kill(region: str, mode: str, backend: str, force_both: bool, mock: bool):
             f"CHAN LAI: region-{other} dang khong sống. Chạy `restore --region {other}` trước.\n"
             f"(Muốn ép: --i-really-want-both, nhưng drill sẽ bị đánh dấu INVALID.)")
 
-    ev = event(action="kill", region=region, mode=mode, backend=backend, mock=mock,
-               other_region=other, other_alive=other_alive, forced_both=force_both,
-               note="t_outage_start — moc 0 cua RTO clock")
     if backend == "bare":
         pid = pid_of(region)
         if pid is None:
@@ -104,7 +101,9 @@ def kill(region: str, mode: str, backend: str, force_both: bool, mock: bool):
         else:
             subprocess.run(["docker", "exec", "--privileged", svc, "iptables", "-A", "INPUT",
                             "-p", "tcp", "--dport", "8000", "-j", "DROP"], check=True)
-    return ev
+    return event(action="kill", region=region, mode=mode, backend=backend, mock=mock,
+                 other_region=other, other_alive=other_alive, forced_both=force_both,
+                 note="t_outage_start — moc 0 cua RTO clock")
 
 
 def restore(region: str, backend: str):

@@ -1,0 +1,3 @@
+{"event": "state_change", "ts": 1791646338.9692354, "region": "b", "to": "UNHEALTHY", "reason": "HTTP 503", "interval_s": 5.0, "threshold": 3, "consecutive_fails": 3}
+{"event": "state_change", "ts": 1791646355.9572697, "region": "a", "to": "UNHEALTHY", "reason": "ConnectTimeout: timed out", "interval_s": 5.0, "threshold": 3, "consecutive_fails": 3}
+{"event": "state_change", "ts": 1791646410.9620178, "region": "b", "to": "HEALTHY", "reason": "HTTP 200", "interval_s": 5.0, "threshold": 3, "consecutive_fails": 0}
